@@ -2,33 +2,40 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LayoutDashboardIcon, ListChecksIcon, MessagesSquareIcon, SmartphoneIcon, SquareKanbanIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const LINKS = [
-  { href: "/", label: "Dashboard" },
-  { href: "/inbox", label: "Inbox" },
-  { href: "/leads", label: "Leads" },
-  { href: "/checklists", label: "Checklists" },
-  { href: "/simulator", label: "Simulator" },
+  { href: "/", label: "Dashboard", icon: LayoutDashboardIcon },
+  { href: "/inbox", label: "Inbox", icon: MessagesSquareIcon },
+  { href: "/leads", label: "Leads", icon: SquareKanbanIcon },
+  { href: "/checklists", label: "Checklists", icon: ListChecksIcon },
+  { href: "/simulator", label: "Simulator", icon: SmartphoneIcon },
 ];
 
-export function Nav() {
+export function Nav({ collapsed = false, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
   const path = usePathname();
   return (
-    <nav aria-label="Main" className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
-      {LINKS.map((l) => {
-        const active = l.href === "/" ? path === "/" : path.startsWith(l.href);
+    <nav aria-label="Main" className="flex flex-col gap-0.5">
+      {LINKS.map(({ href, label, icon: Icon }) => {
+        const active = href === "/" ? path === "/" : path.startsWith(href);
         return (
           <Link
-            key={l.href}
-            href={l.href}
+            key={href}
+            href={href}
+            onClick={onNavigate}
+            title={collapsed ? label : undefined}
             aria-current={active ? "page" : undefined}
-            className={`whitespace-nowrap rounded-md px-3 py-2 text-sm transition-colors ${
+            className={cn(
+              "relative flex h-9 items-center gap-3 rounded-md text-sm transition-colors duration-150 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+              collapsed ? "justify-center px-0" : "px-3",
               active
-                ? "bg-accent-soft font-medium text-ink"
-                : "text-ink-2 hover:bg-surface-2 hover:text-ink"
-            }`}
+                ? "bg-sidebar-accent font-medium text-foreground before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-primary"
+                : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+            )}
           >
-            {l.label}
+            <Icon className={cn("size-4 shrink-0", active && "text-primary")} />
+            <span className={cn(collapsed && "sr-only")}>{label}</span>
           </Link>
         );
       })}

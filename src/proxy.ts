@@ -1,17 +1,23 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, safeEqual, sessionToken } from "@/lib/auth";
+import { missingSettings } from "@/lib/setup";
 
 /**
  * Keeps the hub behind the sign-in page (password = HUB_PASSWORD).
+ * If the deployment is missing required settings, every page shows the setup guide on /login.
  * The Meta webhook is excluded in the matcher so WhatsApp can reach it.
  */
 export async function proxy(request: NextRequest) {
-  const password = process.env.HUB_PASSWORD;
   const { pathname, search } = request.nextUrl;
+  const password = process.env.HUB_PASSWORD;
 
+  if (missingSettings().length) {
+    return pathname === "/login" ? NextResponse.next() : NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // Local development without a password: the hub is open.
   if (!password) {
-    if (process.env.NODE_ENV !== "production") return NextResponse.next();
-    return new NextResponse("Set HUB_PASSWORD to open the hub.", { status: 503 });
+    return pathname === "/login" ? NextResponse.redirect(new URL("/", request.url)) : NextResponse.next();
   }
 
   const cookie = request.cookies.get(SESSION_COOKIE)?.value ?? "";
@@ -28,5 +34,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api/whatsapp|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api/whatsapp|_next/static|_next/image|favicon.ico|icon.svg).*)"],
 };

@@ -18,3 +18,11 @@ export type LeadRow = {
   notes: string;
   isDemo: boolean;
 };
+
+export const STAGE_LABEL: Record<LeadStage, string> = {
+  new: "New",
+  contacted: "Contacted",
+  paid: "Paid",
+  done: "Done",
+  lost: "Lost",
+};

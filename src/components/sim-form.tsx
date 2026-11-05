@@ -1,19 +1,21 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useRef } from "react";
+import { SendHorizontalIcon } from "lucide-react";
 import { simulateMessage, type ActionState } from "@/app/actions";
-import { buttonClass, ghostButtonClass, inputClass } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const QUICK = ["Hi", "1", "good conduct", "AGENT", "menu"];
 
 export function SimForm({ waId, name }: { waId: string; name: string }) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(simulateMessage, { ok: true });
   const form = useRef<HTMLFormElement>(null);
   const text = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (state.ok && !pending && text.current) text.current.value = "";
-  }, [state, pending]);
+  const [state, action, pending] = useActionState<ActionState, FormData>(async (prev, fd) => {
+    const result = await simulateMessage(prev, fd);
+    if (result.ok && text.current) text.current.value = "";
+    return result;
+  }, { ok: true });
 
   function quick(t: string) {
     if (!text.current) return;
@@ -22,22 +24,24 @@ export function SimForm({ waId, name }: { waId: string; name: string }) {
   }
 
   return (
-    <form ref={form} action={action} className="border-t border-line p-3">
+    <form ref={form} action={action} className="space-y-2.5 border-t p-3">
       <input type="hidden" name="waId" value={waId} />
       <input type="hidden" name="name" value={name} />
-      <div className="mb-2 flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1.5" aria-label="Quick messages">
         {QUICK.map((q) => (
-          <button key={q} type="button" disabled={pending} onClick={() => quick(q)} className={`${ghostButtonClass} px-2.5 py-1 text-xs`}>
+          <Button key={q} type="button" size="sm" variant="outline" disabled={pending} onClick={() => quick(q)} className="h-7 rounded-full px-3 text-xs font-normal">
             {q}
-          </button>
+          </Button>
         ))}
       </div>
       <div className="flex gap-2">
         <label htmlFor="sim-text" className="sr-only">Message</label>
-        <input ref={text} id="sim-text" name="text" autoComplete="off" placeholder="Type as the customer…" className={inputClass} />
-        <button type="submit" disabled={pending} className={buttonClass}>{pending ? "…" : "Send"}</button>
+        <Input ref={text} id="sim-text" name="text" autoComplete="off" placeholder="Type as the customer" className="bg-background" />
+        <Button type="submit" disabled={pending} size="icon" aria-label="Send">
+          <SendHorizontalIcon />
+        </Button>
       </div>
-      {!state.ok && <p role="alert" className="mt-1.5 text-xs text-danger">{state.message}</p>}
+      {!state.ok && <p role="alert" className="text-xs text-destructive">{state.message}</p>}
     </form>
   );
 }

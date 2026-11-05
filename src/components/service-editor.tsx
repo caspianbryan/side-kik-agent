@@ -1,9 +1,15 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { toast } from "sonner";
 import { updateService, type ActionState } from "@/app/actions";
 import { WaText } from "@/components/wa-text";
-import { buttonClass, inputClass, Label } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 
 type S = {
   id: number;
@@ -17,75 +23,84 @@ type S = {
 };
 
 export function ServiceEditor({ service }: { service: S }) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(updateService, { ok: true });
   const [text, setText] = useState(service.checklist);
+  const [state, action, pending] = useActionState<ActionState, FormData>(async (prev, fd) => {
+    const result = await updateService(prev, fd);
+    if (result.ok) toast.success(`${fd.get("name")} saved`, { description: "The bot uses it from the next message." });
+    return result;
+  }, { ok: true });
   const id = (k: string) => `svc-${service.id}-${k}`;
+  const over = text.length > 3500;
 
   return (
-    <form action={action} className="rounded-lg border border-line bg-surface p-4 md:p-5">
-      <input type="hidden" name="id" value={service.id} />
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-base font-semibold">
-          <span className="mr-2 rounded bg-surface-2 px-1.5 py-0.5 font-mono text-xs text-ink-2">{service.menuKey}</span>
-          {service.name}
-        </h2>
-        <p className="text-xs text-ink-3">
-          Updated {new Date(service.updatedAt).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
-        </p>
-      </div>
+    <Card>
+      <form action={action} className="contents">
+        <input type="hidden" name="id" value={service.id} />
+        <CardHeader>
+          <CardTitle className="flex items-center gap-3 text-base">
+            <span className="font-display flex size-7 items-center justify-center rounded-md border text-sm text-muted-foreground">
+              {service.menuKey}
+            </span>
+            {service.name}
+          </CardTitle>
+          <CardDescription>
+            Last updated{" "}
+            {new Date(service.updatedAt).toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" })}
+          </CardDescription>
+          <CardAction className="flex items-center gap-2 pt-1">
+            <Switch id={id("active")} name="active" defaultChecked={service.active} />
+            <Label htmlFor={id("active")} className="font-normal text-muted-foreground">In menu</Label>
+          </CardAction>
+        </CardHeader>
 
-      <div className="grid gap-3 sm:grid-cols-[1fr_1fr_8rem_auto] sm:items-end">
-        <div>
-          <Label htmlFor={id("name")}>Menu name</Label>
-          <input id={id("name")} name="name" defaultValue={service.name} className={inputClass} />
-        </div>
-        <div>
-          <Label htmlFor={id("kw")}>Keywords (comma separated)</Label>
-          <input id={id("kw")} name="keywords" defaultValue={service.keywords} className={inputClass} />
-        </div>
-        <div>
-          <Label htmlFor={id("price")}>Your fee (KES)</Label>
-          <input id={id("price")} name="priceKes" type="number" min={0} defaultValue={service.priceKes} className={inputClass} />
-        </div>
-        <label htmlFor={id("active")} className="flex items-center gap-2 pb-2 text-sm">
-          <input id={id("active")} name="active" type="checkbox" defaultChecked={service.active} />
-          In menu
-        </label>
-      </div>
-
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <div>
-          <Label htmlFor={id("text")}>Checklist reply</Label>
-          <textarea
-            id={id("text")}
-            name="checklist"
-            rows={16}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            className={`${inputClass} font-mono text-[13px] leading-5`}
-          />
-          <p className={`mt-1 text-xs ${text.length > 3500 ? "text-danger" : "text-ink-3"}`}>
-            {text.length.toLocaleString()} / 3,500 characters · *bold* and _italic_ work like in WhatsApp
-          </p>
-        </div>
-        <div>
-          <p className="mb-1 text-xs font-medium text-ink-2">Preview</p>
-          <div className="rounded-lg bg-surface-2 p-3">
-            <div className="ml-auto max-w-[90%] whitespace-pre-wrap rounded-lg bg-bubble-out px-3 py-2 text-sm">
-              <WaText text={text} />
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-[1fr_1.4fr_9rem]">
+            <div className="space-y-2">
+              <Label htmlFor={id("name")}>Menu name</Label>
+              <Input id={id("name")} name="name" defaultValue={service.name} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={id("kw")}>Keywords that pick it</Label>
+              <Input id={id("kw")} name="keywords" defaultValue={service.keywords} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={id("price")}>Your fee (KES)</Label>
+              <Input id={id("price")} name="priceKes" type="number" min={0} defaultValue={service.priceKes} />
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="mt-4 flex items-center gap-3">
-        <button type="submit" disabled={pending} className={buttonClass}>
-          {pending ? "Saving…" : "Save checklist"}
-        </button>
-        {state.message && (
-          <p role="status" className={`text-sm ${state.ok ? "text-ink-2" : "text-danger"}`}>{state.message}</p>
-        )}
-      </div>
-    </form>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor={id("text")}>Checklist reply</Label>
+              <Textarea
+                id={id("text")}
+                name="checklist"
+                rows={16}
+                value={text}
+                aria-invalid={over || undefined}
+                onChange={(e) => setText(e.target.value)}
+                className="field-sizing-fixed font-mono text-[0.8125rem] leading-6"
+              />
+              <p className={`text-xs ${over ? "text-destructive" : "text-muted-foreground"}`}>
+                {text.length.toLocaleString()} of 3,500 characters. *Bold* and _italic_ work like in WhatsApp.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">How it looks in WhatsApp</p>
+              <div className="rounded-lg border bg-chat-wall p-4">
+                <div className="mr-auto max-w-[92%] rounded-lg rounded-bl-sm border bg-bubble-in px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap">
+                  <WaText text={text} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button type="submit" disabled={pending || over}>{pending ? "Saving…" : "Save checklist"}</Button>
+            {!state.ok && <p role="alert" className="text-sm text-destructive">{state.message}</p>}
+          </div>
+        </CardContent>
+      </form>
+    </Card>
   );
 }

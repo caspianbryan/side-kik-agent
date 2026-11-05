@@ -9,23 +9,27 @@ export type DB = PgDatabase<PgQueryResultHKT, typeof schema>;
 
 const MIGRATIONS = path.join(process.cwd(), "drizzle");
 
+/** Forgives common .env slips: a stray "=", surrounding quotes or spaces. */
+export function cleanUrl(raw: string | undefined) {
+  return (raw ?? "").trim().replace(/^=+/, "").trim().replace(/^['"]|['"]$/g, "");
+}
+
 async function connect(): Promise<DB> {
-  const url = process.env.DATABASE_URL;
+  const url = cleanUrl(process.env.DATABASE_URL);
 
   if (url) {
-    // Deployed: Neon Postgres. Run `npm run db:migrate` once before first deploy.
-    const { Pool } = await import("@neondatabase/serverless");
-    const { drizzle } = await import("drizzle-orm/neon-serverless");
-    const pool = new Pool({ connectionString: url });
-    const { rows } = await pool.query("select to_regclass('public.services') as t");
+    // Neon Postgres over HTTPS (works on any Node version, no WebSockets needed).
+    // Create the tables once with `npm run db:migrate`.
+    const { neon } = await import("@neondatabase/serverless");
+    const { drizzle } = await import("drizzle-orm/neon-http");
+    const sql = neon(url);
+    const rows = (await sql`select to_regclass('public.services') as t`) as { t: string | null }[];
     if (!rows[0]?.t) {
       throw new Error(
-        "DATABASE_URL points to a database without the hub's tables. " +
-          "Leave DATABASE_URL empty in .env.local to use the local database, " +
-          "or run `npm run db:migrate` (only on a database made for this hub, not Rada's).",
+        "Your Neon database doesn't have the hub's tables yet. Run `npm run db:migrate` once, then restart.",
       );
     }
-    return drizzle({ client: pool, schema }) as unknown as DB;
+    return drizzle({ client: sql, schema }) as unknown as DB;
   }
 
   // Local: PGlite (Postgres compiled to WASM) stored in ./data. No install needed.

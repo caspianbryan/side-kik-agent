@@ -11,12 +11,12 @@ export async function signIn(_: SignInState, form: FormData): Promise<SignInStat
   if (!password) redirect("/");
 
   const given = String(form.get("password") ?? "");
-  if (!given) return { error: "Enter the hub password." };
+  if (!given) return { error: "Enter your password." };
 
   const [a, b] = await Promise.all([sessionToken(given), sessionToken(password)]);
   if (!safeEqual(a, b)) {
     await new Promise((r) => setTimeout(r, 600)); // slow down guessing
-    return { error: "That password doesn't match HUB_PASSWORD in .env.local." };
+    return { error: "That password isn't right. Check the HUB_PASSWORD setting." };
   }
 
   (await cookies()).set(SESSION_COOKIE, b, {

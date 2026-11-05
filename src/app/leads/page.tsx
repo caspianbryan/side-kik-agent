@@ -1,19 +1,11 @@
-import { LEAD_STAGES } from "@/lib/constants";
 import { LeadCard } from "@/components/lead-card";
 import { NewLeadForm } from "@/components/new-lead-form";
 import { PageHeader } from "@/components/ui";
+import { LEAD_STAGES, STAGE_LABEL } from "@/lib/constants";
 import { getLeads, getServices } from "@/lib/queries";
 import { kes } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
-
-const STAGE_LABEL: Record<(typeof LEAD_STAGES)[number], string> = {
-  new: "New",
-  contacted: "Contacted",
-  paid: "Paid",
-  done: "Done",
-  lost: "Lost",
-};
 
 export default async function LeadsPage() {
   const [leads, services] = await Promise.all([getLeads(), getServices()]);
@@ -23,27 +15,28 @@ export default async function LeadsPage() {
     <>
       <PageHeader
         title="Leads"
-        lead="Done-for-you requests (the bot adds these when someone replies AGENT) and SME clients. Move them across as they progress."
+        lead="Done-for-you requests arrive here when someone replies AGENT. Add SME clients yourself, then move each one along as it progresses."
       />
-      <div className="mb-6">
+      <div className="mb-8">
         <NewLeadForm services={services.map((s) => ({ slug: s.slug, name: s.name, priceKes: s.priceKes }))} />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-5">
+      <div className="relative -mx-4 overflow-x-auto px-4 pb-2 md:-mx-10 md:px-10">
+      <div className="grid w-max grid-cols-[repeat(5,17rem)] items-start gap-4 2xl:w-full 2xl:grid-cols-5">
         {LEAD_STAGES.map((stage) => {
           const items = leads.filter((l) => l.stage === stage);
           const total = items.reduce((sum, l) => sum + l.amountKes, 0);
           return (
-            <section key={stage} aria-label={STAGE_LABEL[stage]} className="rounded-lg bg-surface-2 p-2">
-              <header className="flex items-baseline justify-between px-1 pb-2">
-                <h2 className="text-sm font-semibold">
-                  {STAGE_LABEL[stage]} <span className="font-normal text-ink-3">{items.length}</span>
+            <section key={stage} aria-label={STAGE_LABEL[stage]} className="min-w-0 rounded-xl bg-secondary/50 p-2">
+              <header className="flex items-baseline justify-between gap-2 px-1.5 pt-1 pb-3">
+                <h2 className="text-sm font-medium">
+                  {STAGE_LABEL[stage]} <span className="ml-1 text-muted-foreground tabular-nums">{items.length}</span>
                 </h2>
-                {total > 0 && <span className="text-xs tabular-nums text-ink-2">{kes(total)}</span>}
+                {total > 0 && <span className="text-xs text-muted-foreground tabular-nums">{kes(total)}</span>}
               </header>
               <div className="space-y-2">
                 {items.length === 0 ? (
-                  <p className="px-1 pb-2 text-xs text-ink-3">Nothing here.</p>
+                  <p className="rounded-lg border border-dashed px-3 py-6 text-center text-xs text-muted-foreground">Nothing here yet</p>
                 ) : (
                   items.map((l) => <LeadCard key={l.id} lead={l} serviceName={names[l.serviceSlug ?? ""]} />)
                 )}
@@ -51,6 +44,7 @@ export default async function LeadsPage() {
             </section>
           );
         })}
+      </div>
       </div>
     </>
   );

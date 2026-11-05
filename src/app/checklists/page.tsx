@@ -10,7 +10,7 @@ export default async function ChecklistsPage() {
     <>
       <PageHeader
         title="Checklists"
-        lead="What the bot sends for each service. Check fees on the official sites before going live, and update here whenever a rule changes."
+        lead="What the bot sends for each service. Check fees on the official sites before going live, and update them here when a rule changes."
       />
       <div className="space-y-6">
         {services.map((s) => (

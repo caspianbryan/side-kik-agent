@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Badge, Card } from "@/components/ui";
+import { ArrowLeftIcon } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ReplyBox } from "@/components/reply-box";
 import { ScrollAnchor } from "@/components/scroll-anchor";
 import { WaText } from "@/components/wa-text";
 import { getThread } from "@/lib/queries";
 import { isLive } from "@/lib/whatsapp";
-import { clock, kes, phone } from "@/lib/format";
+import { clock, initials, kes, phone } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -17,44 +21,46 @@ export default async function ThreadPage({ params }: PageProps<"/inbox/[id]">) {
   const { contact, thread, leads } = data;
 
   return (
-    <Card className="flex h-[calc(100vh-8rem)] min-h-[28rem] flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
-        <div className="flex items-center gap-3">
-          <Link href="/inbox" className="text-sm text-ink-2 md:hidden" aria-label="Back to inbox">
-            ←
-          </Link>
-          <div>
-            <p className="text-sm font-semibold">{contact.name || phone(contact.waId)}</p>
-            <p className="text-xs text-ink-3">{phone(contact.waId)}</p>
+    <section className="flex h-[calc(100vh-7.5rem)] min-h-[30rem] flex-col overflow-hidden rounded-xl border bg-card md:h-[calc(100vh-11rem)]">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <Button asChild variant="ghost" size="icon-sm" className="md:hidden">
+            <Link href="/inbox" aria-label="Back to inbox"><ArrowLeftIcon /></Link>
+          </Button>
+          <Avatar className="size-9">
+            <AvatarFallback>{initials(contact.name, "#")}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">{contact.name || phone(contact.waId)}</p>
+            <p className="text-xs text-muted-foreground">{phone(contact.waId)}</p>
           </div>
-          {contact.isDemo && <Badge tone="warn">Demo</Badge>}
+          {contact.isDemo && <Badge variant="warning">Demo</Badge>}
         </div>
         <div className="flex flex-wrap gap-1.5">
           {leads.map((l) => (
-            <Link key={l.id} href="/leads">
-              <Badge tone={l.stage === "paid" || l.stage === "done" ? "accent" : "neutral"}>
-                Lead · {l.stage} · {kes(l.amountKes)}
-              </Badge>
-            </Link>
+            <Badge key={l.id} asChild variant={l.stage === "paid" || l.stage === "done" ? "success" : "outline"}>
+              <Link href="/leads">Lead: {l.stage}, {kes(l.amountKes)}</Link>
+            </Badge>
           ))}
         </div>
       </header>
 
-      <ol className="flex-1 space-y-2 overflow-y-auto bg-surface-2 px-4 py-4" aria-label="Messages">
+      <ol className="flex-1 space-y-2 overflow-y-auto bg-chat-wall px-4 py-5" aria-label="Messages">
         {thread.map((m) => {
           const out = m.direction === "out";
           return (
-            <li key={m.id} className={`flex ${out ? "justify-end" : "justify-start"}`}>
+            <li key={m.id} className={cn("flex", out ? "justify-end" : "justify-start")}>
               <div
-                className={`max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm shadow-[0_1px_0_var(--border)] ${
-                  out ? "bg-bubble-out" : "bg-bubble-in"
-                }`}
+                className={cn(
+                  "max-w-[80%] rounded-lg px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap",
+                  out ? "rounded-br-sm bg-bubble-out" : "rounded-bl-sm border bg-bubble-in",
+                )}
               >
                 <WaText text={m.body} />
-                <p className="mt-1 text-right text-[11px] text-ink-3">
-                  {out && (m.author === "bot" ? "Bot · " : "You · ")}
+                <p className="mt-1 text-right text-xs text-muted-foreground">
+                  {out && (m.author === "bot" ? "Bot, " : "You, ")}
                   {clock(m.createdAt)}
-                  {m.deliveryStatus === "failed" && <span className="text-danger"> · not delivered</span>}
+                  {m.deliveryStatus === "failed" && <span className="text-destructive"> (not delivered)</span>}
                 </p>
               </div>
             </li>
@@ -64,6 +70,6 @@ export default async function ThreadPage({ params }: PageProps<"/inbox/[id]">) {
       </ol>
 
       <ReplyBox contactId={contact.id} live={isLive() && !contact.isDemo} />
-    </Card>
+    </section>
   );
 }

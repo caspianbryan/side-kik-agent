@@ -1,72 +1,98 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useActionState, useState, useTransition } from "react";
+import { ChevronDownIcon } from "lucide-react";
+import { toast } from "sonner";
 import { moveLead, updateLead, type ActionState } from "@/app/actions";
-import { LEAD_STAGES, type LeadRow as Lead, type LeadStage } from "@/lib/constants";
-import { Badge, buttonClass, inputClass, Label } from "@/components/ui";
+import { LEAD_STAGES, STAGE_LABEL, type LeadRow as Lead, type LeadStage } from "@/lib/constants";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { kes, phone } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export function LeadCard({ lead, serviceName }: { lead: Lead; serviceName?: string }) {
   const [pending, start] = useTransition();
-  const [state, action, saving] = useActionState<ActionState, FormData>(updateLead, { ok: true });
+  const [editing, setEditing] = useState(false);
+  const [, action, saving] = useActionState<ActionState, FormData>(async (prev, fd) => {
+    const result = await updateLead(prev, fd);
+    if (result.ok) {
+      toast.success(`Saved ${lead.name}`);
+      setEditing(false);
+    } else toast.error(result.message);
+    return result;
+  }, { ok: true });
   const f = (k: string) => `lead-${lead.id}-${k}`;
 
   return (
-    <article className={`rounded-md border border-line bg-surface p-3 ${pending ? "opacity-60" : ""}`}>
+    <article className={cn("relative rounded-lg border bg-card p-3.5 transition-opacity duration-150", pending && "opacity-60")}>
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium">{lead.name}</p>
-        <Badge tone={lead.kind === "sme" ? "accent" : "neutral"}>{lead.kind === "sme" ? "SME" : "Application"}</Badge>
+        <p className="text-sm font-medium leading-snug">{lead.name}</p>
+        <Badge variant={lead.kind === "sme" ? "default" : "secondary"}>{lead.kind === "sme" ? "SME" : "Application"}</Badge>
       </div>
-      <p className="mt-0.5 text-xs text-ink-2">
-        {lead.kind === "sme" ? lead.business : serviceName ?? lead.serviceSlug}
-      </p>
-      {lead.phone && <p className="text-xs text-ink-3">{phone(lead.phone)}</p>}
-      <p className="mt-2 text-sm tabular-nums">
+      <p className="mt-1 text-sm text-muted-foreground">{lead.kind === "sme" ? lead.business : serviceName ?? lead.serviceSlug}</p>
+      {lead.phone && <p className="text-xs text-muted-foreground">{phone(lead.phone)}</p>}
+
+      <p className="font-display mt-3 text-[1.2rem] leading-tight">
         {kes(lead.amountKes)}
-        {lead.monthlyKes > 0 && <span className="text-ink-2"> + {kes(lead.monthlyKes)}/mo</span>}
+        {lead.monthlyKes > 0 && <span className="font-sans text-sm text-muted-foreground"> + {kes(lead.monthlyKes)}/mo</span>}
       </p>
-      {lead.isDemo && <p className="mt-1"><Badge tone="warn">Demo</Badge></p>}
+      {lead.isDemo && <Badge variant="warning" className="mt-2">Demo</Badge>}
 
-      <label htmlFor={f("move")} className="mt-2 block text-xs text-ink-3">Stage</label>
-      <select
-        id={f("move")}
-        value={lead.stage}
-        disabled={pending}
-        onChange={(e) => start(() => moveLead(lead.id, e.target.value as LeadStage))}
-        className={`${inputClass} mt-1 py-1.5 text-xs capitalize`}
-      >
-        {LEAD_STAGES.map((s) => (
-          <option key={s} value={s}>{s}</option>
-        ))}
-      </select>
+      <div className="mt-3 flex items-center gap-2">
+        <Label htmlFor={f("move")} className="sr-only">Stage</Label>
+        <Select value={lead.stage} disabled={pending} onValueChange={(v) => start(() => moveLead(lead.id, v as LeadStage))}>
+          <SelectTrigger id={f("move")} size="sm" className="flex-1">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {LEAD_STAGES.map((s) => (
+              <SelectItem key={s} value={s}>{STAGE_LABEL[s]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          aria-expanded={editing}
+          aria-controls={f("edit")}
+          onClick={() => setEditing((e) => !e)}
+          className="text-muted-foreground"
+        >
+          Edit
+          <ChevronDownIcon className={cn("transition-transform duration-150", editing && "rotate-180")} />
+        </Button>
+      </div>
 
-      <details className="mt-2">
-        <summary className="cursor-pointer text-xs text-ink-2 hover:text-ink">Edit amount & notes</summary>
-        <form action={action} className="mt-2 space-y-2">
+      {editing && (
+        <form id={f("edit")} action={action} className="mt-3 space-y-3 border-t pt-3">
           <input type="hidden" name="id" value={lead.id} />
           <input type="hidden" name="stage" value={lead.stage} />
-          <div>
-            <Label htmlFor={f("amount")}>Amount (KES)</Label>
-            <input id={f("amount")} name="amountKes" type="number" min={0} defaultValue={lead.amountKes} className={inputClass} />
-          </div>
-          {lead.kind === "sme" && (
-            <div>
-              <Label htmlFor={f("monthly")}>Monthly (KES)</Label>
-              <input id={f("monthly")} name="monthlyKes" type="number" min={0} defaultValue={lead.monthlyKes} className={inputClass} />
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1.5">
+              <Label htmlFor={f("amount")} className="text-xs text-muted-foreground">Amount (KES)</Label>
+              <Input id={f("amount")} name="amountKes" type="number" min={0} defaultValue={lead.amountKes} className="h-8" />
             </div>
-          )}
-          <div>
-            <Label htmlFor={f("notes")}>Notes</Label>
-            <textarea id={f("notes")} name="notes" rows={3} defaultValue={lead.notes} className={inputClass} />
+            {lead.kind === "sme" && (
+              <div className="space-y-1.5">
+                <Label htmlFor={f("monthly")} className="text-xs text-muted-foreground">Monthly (KES)</Label>
+                <Input id={f("monthly")} name="monthlyKes" type="number" min={0} defaultValue={lead.monthlyKes} className="h-8" />
+              </div>
+            )}
           </div>
-          <button type="submit" disabled={saving} className={`${buttonClass} w-full`}>
+          <div className="space-y-1.5">
+            <Label htmlFor={f("notes")} className="text-xs text-muted-foreground">Notes</Label>
+            <Textarea id={f("notes")} name="notes" rows={3} defaultValue={lead.notes} />
+          </div>
+          <Button type="submit" size="sm" disabled={saving} className="w-full">
             {saving ? "Saving…" : "Save lead"}
-          </button>
-          {state.message && (
-            <p role="status" className={`text-xs ${state.ok ? "text-ink-3" : "text-danger"}`}>{state.message}</p>
-          )}
+          </Button>
         </form>
-      </details>
+      )}
     </article>
   );
 }

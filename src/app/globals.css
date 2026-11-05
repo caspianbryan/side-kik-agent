@@ -1,76 +1,149 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/newsreader/opsz.css";
 
-/* Neutral surfaces + one accent (WhatsApp-adjacent green, kept for actions and data). */
+@custom-variant dark (&:is(.dark *));
+
+/*
+  Zola — "quiet desk" theme.
+  Deep jade-black surfaces, ivory ink, one champagne-brass accent.
+  Brass marks the things you act on; jade means "live / delivered".
+*/
+
 :root {
-  --bg: #f7f7f5;
-  --surface: #ffffff;
-  --surface-2: #f1f1ee;
-  --border: #e4e4df;
-  --ink: #1c1c1a;
-  --ink-2: #57574f;
-  --ink-3: #8a8a80;
-  --accent: #128c5e;
-  --accent-ink: #ffffff;
-  --accent-soft: #e3f3ec;
+  --radius: 0.625rem;
+
+  --background: #f3f4f1;
+  --foreground: #141817;
+  --card: #ffffff;
+  --card-foreground: #141817;
+  --popover: #ffffff;
+  --popover-foreground: #141817;
+  --primary: #8a6a2e;
+  --primary-foreground: #fffdf8;
+  --secondary: #eceee9;
+  --secondary-foreground: #1d2220;
+  --muted: #eceee9;
+  --muted-foreground: #646b66;
+  --accent: #eceee9;
+  --accent-foreground: #141817;
+  --destructive: #b8412c;
+  --border: #dfe2dc;
+  --input: #d5d9d2;
+  --ring: #8a6a2e;
+
+  --success: #1f8a62;
+  --warning-bg: #f6eedc;
+  --warning-fg: #6e5214;
+
   --bubble-in: #ffffff;
-  --bubble-out: #dcf3e6;
-  --danger: #b4231a;
-  --warn-soft: #fff4dc;
-  --warn-ink: #7a5300;
+  --bubble-out: #dcefe5;
+  --chat-wall: #eceee9;
+
+  --sidebar: #fafaf8;
+  --sidebar-foreground: #141817;
+  --sidebar-accent: #eceee9;
+  --sidebar-border: #e3e5e0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #121211;
-    --surface: #1b1b19;
-    --surface-2: #242421;
-    --border: #2f2f2b;
-    --ink: #ededE8;
-    --ink-2: #b3b3aa;
-    --ink-3: #7c7c73;
-    --accent: #2fb67f;
-    --accent-ink: #0b1f16;
-    --accent-soft: #163327;
-    --bubble-in: #242421;
-    --bubble-out: #1d3b2c;
-    --danger: #ff7a6e;
-    --warn-soft: #3a2e12;
-    --warn-ink: #f2cf7a;
-  }
+.dark {
+  --background: #0d1110;
+  --foreground: #ebe6db;
+  --card: #131817;
+  --card-foreground: #ebe6db;
+  --popover: #161c1b;
+  --popover-foreground: #ebe6db;
+  --primary: #cdb07a;
+  --primary-foreground: #1b1608;
+  --secondary: #1a2120;
+  --secondary-foreground: #ebe6db;
+  --muted: #1a2120;
+  --muted-foreground: #8f978f;
+  --accent: #1c2423;
+  --accent-foreground: #ebe6db;
+  --destructive: #e07a63;
+  --border: #222a28;
+  --input: #2a3331;
+  --ring: #cdb07a;
+
+  --success: #4fb58f;
+  --warning-bg: #2b2412;
+  --warning-fg: #e3c98e;
+
+  --bubble-in: #1a2120;
+  --bubble-out: #183329;
+  --chat-wall: #0f1413;
+
+  --sidebar: #0b0f0e;
+  --sidebar-foreground: #ebe6db;
+  --sidebar-accent: #171e1d;
+  --sidebar-border: #1d2422;
 }
 
 @theme inline {
-  --color-bg: var(--bg);
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
-  --color-line: var(--border);
-  --color-ink: var(--ink);
-  --color-ink-2: var(--ink-2);
-  --color-ink-3: var(--ink-3);
-  --color-accent: var(--accent);
-  --color-accent-ink: var(--accent-ink);
-  --color-accent-soft: var(--accent-soft);
-  --color-bubble-in: var(--bubble-in);
-  --color-bubble-out: var(--bubble-out);
-  --color-danger: var(--danger);
-  --color-warn-soft: var(--warn-soft);
-  --color-warn-ink: var(--warn-ink);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: "Newsreader Variable", ui-serif, Georgia, serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-fg: var(--warning-fg);
+  --color-bubble-in: var(--bubble-in);
+  --color-bubble-out: var(--bubble-out);
+  --color-chat-wall: var(--chat-wall);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Type scale: minor third from 16px. Meta 12 · secondary 14 · body 16. */
+  --text-h3: 1.2rem;
+  --text-h2: 1.44rem;
+  --text-h1: 2.074rem;
 }
 
-body {
-  background: var(--bg);
-  color: var(--ink);
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "cv11";
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--primary) 35%, transparent);
+  }
 }
 
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; animation: none !important; }
+/* Serif display face: page titles and headline numbers only. */
+.font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 /* Motion tokens (100 / 150 / 200 / 300ms; ease-out to enter, ease-in to exit). */
@@ -93,4 +166,56 @@ body {
 }
 .fade-in {
   animation: fade-in var(--motion-150) var(--ease-out) backwards;
+}
+
+/* Page content settles in on navigation (one short move, nothing else animates on its own). */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(4px); }
+}
+.page-enter {
+  animation: page-enter var(--motion-200) var(--ease-out) backwards;
+}
+
+/* Progress and bar charts fill from the left once, on load. */
+@keyframes bar-fill {
+  from { transform: scaleX(0); }
+}
+.bar-fill {
+  transform-origin: left center;
+  animation: bar-fill 300ms var(--ease-out) 100ms backwards;
+}
+
+/* Logo on the sign-in page: bubble appears, then the Z draws itself. */
+@keyframes zola-bubble {
+  from { opacity: 0; transform: scale(0.85); }
+}
+.zola-bubble {
+  transform-box: fill-box;
+  transform-origin: 20% 90%;
+  animation: zola-bubble 300ms var(--ease-out) backwards;
+}
+@keyframes zola-stroke {
+  from { stroke-dashoffset: 1; }
+}
+.zola-stroke {
+  stroke-dasharray: 1;
+  animation: zola-stroke 300ms var(--ease-out) 200ms backwards;
+}
+
+/* "Live" status: a slow ping that only runs while replies are really going out. */
+@keyframes live-ping {
+  0% { transform: scale(1); opacity: 0.6; }
+  80%, 100% { transform: scale(2.4); opacity: 0; }
+}
+.live-ping {
+  animation: live-ping 2s var(--ease-out) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-ping { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,41 +1,48 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useRef } from "react";
+import { SendHorizontalIcon } from "lucide-react";
+import { toast } from "sonner";
 import { sendReply, type ActionState } from "@/app/actions";
-import { buttonClass, inputClass } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 export function ReplyBox({ contactId, live }: { contactId: number; live: boolean }) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(sendReply, { ok: true });
   const form = useRef<HTMLFormElement>(null);
-
-  useEffect(() => {
-    if (state.ok && !pending) form.current?.reset();
-  }, [state, pending]);
+  const [state, action, pending] = useActionState<ActionState, FormData>(async (prev, fd) => {
+    const result = await sendReply(prev, fd);
+    if (result.ok) {
+      form.current?.reset();
+      toast.success(live ? "Reply sent" : "Reply saved (demo mode)");
+    }
+    return result;
+  }, { ok: true });
 
   return (
-    <form ref={form} action={action} className="border-t border-line p-3">
+    <form ref={form} action={action} className="border-t p-3">
       <input type="hidden" name="contactId" value={contactId} />
       <label htmlFor="reply" className="sr-only">Reply</label>
-      <div className="flex gap-2">
-        <textarea
+      <div className="flex items-end gap-2">
+        <Textarea
           id="reply"
           name="body"
-          rows={2}
-          placeholder="Type a reply…"
-          className={`${inputClass} resize-none`}
+          rows={1}
+          placeholder="Write a reply"
+          className="max-h-40 min-h-10 resize-none bg-background"
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) form.current?.requestSubmit();
           }}
         />
-        <button type="submit" disabled={pending} className={`${buttonClass} self-end`}>
+        <Button type="submit" disabled={pending} className="h-10">
+          <SendHorizontalIcon />
           {pending ? "Sending…" : "Send reply"}
-        </button>
+        </Button>
       </div>
-      <p className={`mt-1.5 text-xs ${state.ok ? "text-ink-3" : "text-danger"}`} role="status">
+      <p className={`mt-2 text-xs ${state.ok ? "text-muted-foreground" : "text-destructive"}`} role="status">
         {!state.ok
           ? state.message
           : live
-            ? "Ctrl+Enter to send. Free-form replies only reach people who messaged in the last 24 h."
+            ? "Ctrl+Enter sends. Replies reach people who messaged in the last 24 hours."
             : "Demo mode: replies are saved here, not sent to WhatsApp."}
       </p>
     </form>

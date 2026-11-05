@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { clearDemoData } from "@/app/actions";
+import { Button } from "@/components/ui/button";
 
 export function ClearDemoButton() {
   const [confirming, setConfirming] = useState(false);
@@ -9,29 +11,30 @@ export function ClearDemoButton() {
 
   if (!confirming)
     return (
-      <button
-        type="button"
-        onClick={() => setConfirming(true)}
-        className="rounded-md border border-current px-3 py-1.5 text-xs font-medium"
-      >
+      <Button size="sm" variant="outline" onClick={() => setConfirming(true)} className="border-warning-fg/40 bg-transparent text-warning-fg hover:bg-warning-fg/10 hover:text-warning-fg">
         Clear demo data
-      </button>
+      </Button>
     );
 
   return (
-    <span className="flex items-center gap-2 text-xs">
+    <div className="flex flex-wrap items-center gap-2 text-sm">
       <span>Delete all demo chats and leads?</span>
-      <button
-        type="button"
+      <Button
+        size="sm"
+        variant="destructive"
         disabled={pending}
-        onClick={() => start(() => clearDemoData())}
-        className="rounded-md bg-danger px-3 py-1.5 font-medium text-white disabled:opacity-50"
+        onClick={() =>
+          start(async () => {
+            await clearDemoData();
+            toast.success("Demo data deleted");
+          })
+        }
       >
         {pending ? "Deleting…" : "Delete demo data"}
-      </button>
-      <button type="button" onClick={() => setConfirming(false)} className="px-2 py-1.5 underline">
+      </Button>
+      <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
         Keep it
-      </button>
-    </span>
+      </Button>
+    </div>
   );
 }

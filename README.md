@@ -1,6 +1,6 @@
-# WhatsApp Hub
+# Zola
 
-One place to see and run the WhatsApp services bot: inbox, leads, 2-week targets and the checklists the bot sends. The same bot later gets cloned for SME clients.
+Zola is one place to see and run your WhatsApp services bot: inbox, leads, 2-week targets and the checklists the bot sends. The same bot later gets cloned for SME clients.
 
 ## Run it locally
 
@@ -18,9 +18,21 @@ Open http://localhost:3000 and sign in with your `HUB_PASSWORD`. No database to 
 - **Checklists**: edit what the bot sends. Changes apply from the next message.
 - **Dashboard**: progress against the targets in `src/lib/targets.ts`.
 
-Keep `DATABASE_URL` empty for local use. If it points at a Neon database (for example Rada's), the hub stops with a message instead of touching it.
+### Using Neon instead
+
+1. In Neon, create a **new database** for the hub (not Rada's) and copy its connection string.
+2. Put it in `.env.local` as `DATABASE_URL=...`
+3. Run `npm run db:migrate` once. It creates the tables and the 5 services. Add `-- --demo` to also load demo chats.
+   It refuses to run on a database that already has other apps' tables.
+4. `npm run dev`
+
+Leave `DATABASE_URL` empty to go back to the local database.
 
 Clear the demo data from the dashboard banner before you go live. To start from zero, stop the server and delete the `data` folder.
+
+## Deploying to Vercel
+
+In Vercel → your project → Settings → Environment Variables, add `HUB_PASSWORD` and `DATABASE_URL` (your Neon URL), plus the `WHATSAPP_*` values when you have them. Then redeploy. Until both are set, Zola shows a setup guide instead of the sign-in page.
 
 ## Going live with WhatsApp
 
@@ -33,6 +45,10 @@ Clear the demo data from the dashboard banner before you go live. To start from 
 5. Send "Hi" from your phone to the test number. The sidebar dot turns green once the token is set.
 
 The temporary token expires after about a day. For anything lasting, create a System User token in Meta Business settings.
+
+## Look and feel
+
+UI components are [shadcn/ui](https://ui.shadcn.com) (in `src/components/ui`), themed in `src/app/globals.css`. Dark is the default; switch under **Appearance** in the sidebar. Add more components with `npx shadcn@latest add <name>`.
 
 ## Notes
 
