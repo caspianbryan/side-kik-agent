@@ -90,7 +90,7 @@ export function AppShell({ live, hasPassword, children }: { live: boolean; hasPa
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const { collapsed, toggle } = useSidebarCollapsed();
-  if (path === "/login" || path === "/privacy") return <>{children}</>;
+  if (path === "/login" || path.startsWith("/privacy")) return <>{children}</>;
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
