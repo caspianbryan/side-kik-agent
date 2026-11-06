@@ -5,7 +5,7 @@ import { missingSettings } from "@/lib/setup";
 /**
  * Keeps the hub behind the sign-in page (password = HUB_PASSWORD).
  * If the deployment is missing required settings, every page shows the setup guide on /login.
- * The Meta webhook is excluded in the matcher so WhatsApp can reach it.
+ * The Meta webhook and the public privacy page are excluded in the matcher.
  */
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
@@ -34,5 +34,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api/whatsapp|_next/static|_next/image|favicon.ico|icon.svg).*)"],
+  matcher: ["/((?!api/whatsapp|privacy|_next/static|_next/image|favicon.ico|icon.svg).*)"],
 };

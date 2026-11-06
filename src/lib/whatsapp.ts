@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 
 export type DeliveryStatus = "sent" | "logged" | "failed";
 
-const GRAPH_VERSION = process.env.WHATSAPP_GRAPH_VERSION || "v23.0";
+const GRAPH_VERSION = process.env.WHATSAPP_GRAPH_VERSION || "v27.0";
 
 /** True when Meta credentials are set; otherwise the hub runs in demo mode. */
 export function isLive() {
