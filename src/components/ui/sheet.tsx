@@ -47,8 +47,16 @@ function SheetContent({
   );
 }
 
+function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return <div data-slot="sheet-header" className={cn("flex flex-col gap-1.5 border-b px-6 pt-6 pb-5 pr-12", className)} {...props} />;
+}
+
+function SheetDescription({ className, ...props }: React.ComponentProps<typeof SheetPrimitive.Description>) {
+  return <SheetPrimitive.Description data-slot="sheet-description" className={cn("text-sm text-muted-foreground", className)} {...props} />;
+}
+
 function SheetTitle({ className, ...props }: React.ComponentProps<typeof SheetPrimitive.Title>) {
   return <SheetPrimitive.Title data-slot="sheet-title" className={cn("font-medium", className)} {...props} />;
 }
 
-export { Sheet, SheetTrigger, SheetContent, SheetTitle };
+export { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription };

@@ -17,6 +17,8 @@ export type LeadRow = {
   monthlyKes: number;
   notes: string;
   isDemo: boolean;
+  contactId?: number | null;
+  updatedAt?: string;
 };
 
 export const STAGE_LABEL: Record<LeadStage, string> = {
