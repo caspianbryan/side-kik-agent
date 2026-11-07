@@ -18,7 +18,7 @@ import { SERVICE_SEED, seedDemo } from "../src/db/seed";
 
 config({ path: ".env.local" });
 
-const HUB_TABLES = new Set(["services", "contacts", "messages", "leads"]);
+const HUB_TABLES = new Set(["services", "contacts", "messages", "leads", "settings", "products", "delivery_zones", "orders", "order_items"]);
 
 async function main() {
   // Forgive common .env slips: a stray "=", surrounding quotes or spaces.

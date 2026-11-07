@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/ui";
 import { ScrollAnchor } from "@/components/scroll-anchor";
 import { SimForm } from "@/components/sim-form";
 import { WaText } from "@/components/wa-text";
-import { getThreadByWaId } from "@/lib/queries";
+import { getHubSettings, getOrders, getThreadByWaId } from "@/lib/queries";
 import { clock } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -13,8 +13,14 @@ export const dynamic = "force-dynamic";
 const TEST_NUMBER = "254700000099";
 
 export default async function SimulatorPage() {
-  const data = await getThreadByWaId(TEST_NUMBER);
+  const [data, settings, orders] = await Promise.all([getThreadByWaId(TEST_NUMBER), getHubSettings(), getOrders()]);
   const thread = data?.thread ?? [];
+  const shop = settings.mode === "shop";
+  // Made-up M-Pesa confirmation for the test customer's latest unpaid order (demo of payment claims).
+  const openOrder = data ? orders.find((o) => o.contactId === data.contact.id && o.paymentStatus === "unpaid" && o.status !== "cancelled") : undefined;
+  const samplePayment = openOrder
+    ? `SK${String(openOrder.id).padStart(4, "0")}DEMO Confirmed. Ksh${openOrder.totalKes.toLocaleString("en-KE")}.00 paid to ${settings.businessName.toUpperCase()}. on ${new Date().toLocaleDateString("en-KE", { timeZone: "Africa/Nairobi" })} at 9:41 PM.New M-PESA balance is Ksh1,250.00.`
+    : null;
 
   return (
     <>
@@ -49,7 +55,7 @@ export default async function SimulatorPage() {
               })}
               <ScrollAnchor token={thread.length} />
             </ol>
-            <SimForm waId={TEST_NUMBER} name="Demo · Test customer" />
+            <SimForm waId={TEST_NUMBER} name="Demo · Test customer" mode={shop ? "shop" : "services"} samplePayment={shop ? samplePayment : null} />
           </div>
         </div>
 
@@ -58,6 +64,28 @@ export default async function SimulatorPage() {
             <CardTitle>How the bot answers</CardTitle>
           </CardHeader>
           <CardContent>
+            {shop ? (
+              <dl className="divide-y text-sm">
+                <div className="grid gap-1 py-3 first:pt-0 sm:grid-cols-[11rem_1fr]">
+                  <dt className="font-medium">Hi or menu</dt>
+                  <dd className="text-muted-foreground">Greets with the business name: products, delivery areas, talk to a person.</dd>
+                </div>
+                <div className="grid gap-1 py-3 sm:grid-cols-[11rem_1fr]">
+                  <dt className="font-medium">1, then a product number</dt>
+                  <dd className="text-muted-foreground">Asks quantity, delivery area and location, then creates an order with a code and payment instructions. Typing a product name (&ldquo;frontal&rdquo;) jumps straight to it.</dd>
+                </div>
+                <div className="grid gap-1 py-3 sm:grid-cols-[11rem_1fr]">
+                  <dt className="font-medium">A pasted M-Pesa message</dt>
+                  <dd className="text-muted-foreground">
+                    Marks their order as claimed paid. Verify it in <Link className="text-primary underline-offset-4 hover:underline" href="/orders">Orders</Link> → Reconcile.
+                  </dd>
+                </div>
+                <div className="grid gap-1 py-3 last:pb-0 sm:grid-cols-[11rem_1fr]">
+                  <dt className="font-medium">3, AGENT, cancel</dt>
+                  <dd className="text-muted-foreground">Hands over to you, or drops the order in progress.</dd>
+                </div>
+              </dl>
+            ) : (
             <dl className="divide-y text-sm">
               <div className="grid gap-1 py-3 first:pt-0 sm:grid-cols-[11rem_1fr]">
                 <dt className="font-medium">Hi, menu, or anything unclear</dt>
@@ -74,6 +102,7 @@ export default async function SimulatorPage() {
                 </dd>
               </div>
             </dl>
+            )}
             {data && (
               <p className="mt-6 border-t pt-4 text-sm text-muted-foreground">
                 This chat also appears in the{" "}

@@ -17,6 +17,8 @@ Open http://localhost:3000 and sign in with your `HUB_PASSWORD`. No database to 
 - **Leads**: done-for-you requests (the bot adds one when someone replies `AGENT`) and SME clients.
 - **Checklists**: edit what the bot sends. Changes apply from the next message.
 - **Dashboard**: progress against the targets in `src/lib/targets.ts`.
+- **Settings**: switch the bot between the government-services helper and a **shop** (products, delivery areas, orders).
+- **Products / Orders**: the shop catalogue, and orders the bot takes. Customers paste their M-Pesa message to claim payment; **Orders → Reconcile M-Pesa** matches the messages *you* received and marks orders verified. The matching code lives in `src/lib/mpesa/` with no app dependencies, so it can move to a shared payments service later.
 
 ### Using Neon instead
 

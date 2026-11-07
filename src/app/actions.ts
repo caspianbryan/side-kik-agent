@@ -139,6 +139,8 @@ export async function updateService(_: ActionState, form: FormData): Promise<Act
 
 export async function clearDemoData() {
   const db = await getDb();
+  await db.delete(schema.orders).where(eq(schema.orders.isDemo, true));
+  await db.delete(schema.products).where(eq(schema.products.isDemo, true));
   await db.delete(schema.leads).where(eq(schema.leads.isDemo, true));
   await db.delete(schema.contacts).where(eq(schema.contacts.isDemo, true)); // cascades messages
   refresh();

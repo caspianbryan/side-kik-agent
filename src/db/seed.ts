@@ -137,6 +137,28 @@ export async function seedIfEmpty(db: DB) {
 
   await db.insert(schema.services).values(SERVICE_SEED);
   await seedDemo(db);
+  await seedDemoShop(db);
+}
+
+/** Demo catalogue for showing the shop bot to SME clients (products are marked demo). */
+export async function seedDemoShop(db: DB) {
+  await db.insert(schema.products).values([
+    { name: "Bone straight wig 18 inch", description: "Human hair, natural black, 180% density.", priceKes: 8500, keywords: "bone straight,straight,18", sortOrder: 1, isDemo: true },
+    { name: "Kinky curly wig 16 inch", description: "Soft curls, glueless cap.", priceKes: 7200, keywords: "kinky,curly,curls", sortOrder: 2, isDemo: true },
+    { name: "Lace frontal 13x4", description: "HD lace, pre-plucked.", priceKes: 5500, keywords: "frontal,lace", sortOrder: 3, isDemo: true },
+    { name: "Wig install", description: "At our Nairobi CBD studio, about 2 hours.", priceKes: 1500, keywords: "install,installation,fix", sortOrder: 4, isDemo: true },
+    { name: "Wig cap (pack of 2)", description: "", priceKes: 300, keywords: "cap", sortOrder: 5, inStock: false, isDemo: true },
+  ]);
+  const zones = await db.select({ id: schema.deliveryZones.id }).from(schema.deliveryZones).limit(1);
+  if (!zones.length) {
+    await db.insert(schema.deliveryZones).values([
+      { name: "Pick up in CBD", feeKes: 0, sortOrder: 1 },
+      { name: "Nairobi CBD", feeKes: 200, sortOrder: 2 },
+      { name: "Westlands, Kilimani, South B/C", feeKes: 300, sortOrder: 3 },
+      { name: "Rongai, Kitengela, Ruiru, Kikuyu", feeKes: 450, sortOrder: 4 },
+      { name: "Outside Nairobi (courier)", feeKes: 600, sortOrder: 5 },
+    ]);
+  }
 }
 
 /** Demo contacts, chats and leads (is_demo = true). Clear them from the hub with one click. */

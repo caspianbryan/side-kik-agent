@@ -2,15 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboardIcon, ListChecksIcon, MessagesSquareIcon, SmartphoneIcon, SquareKanbanIcon } from "lucide-react";
+import {
+  LayoutDashboardIcon,
+  ListChecksIcon,
+  MessagesSquareIcon,
+  PackageIcon,
+  Settings2Icon,
+  ShoppingBagIcon,
+  SmartphoneIcon,
+  SquareKanbanIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboardIcon },
   { href: "/inbox", label: "Inbox", icon: MessagesSquareIcon },
+  { href: "/orders", label: "Orders", icon: ShoppingBagIcon },
   { href: "/leads", label: "Leads", icon: SquareKanbanIcon },
+  { href: "/products", label: "Products", icon: PackageIcon },
   { href: "/checklists", label: "Checklists", icon: ListChecksIcon },
   { href: "/simulator", label: "Simulator", icon: SmartphoneIcon },
+  { href: "/settings", label: "Settings", icon: Settings2Icon },
 ];
 
 export function Nav({ collapsed = false, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {

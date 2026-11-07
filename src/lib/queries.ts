@@ -148,3 +148,32 @@ export async function getThreadByWaId(waId: string) {
     .limit(1);
   return contact ? getThread(contact.id) : null;
 }
+
+/* ---------- Shop ---------- */
+
+export async function getProducts() {
+  const db = await getDb();
+  return db.select().from(schema.products).orderBy(asc(schema.products.sortOrder), asc(schema.products.id));
+}
+
+export async function getZones() {
+  const db = await getDb();
+  return db.select().from(schema.deliveryZones).orderBy(asc(schema.deliveryZones.sortOrder), asc(schema.deliveryZones.id));
+}
+
+export async function getOrders() {
+  const db = await getDb();
+  const rows = await db.select().from(schema.orders).orderBy(desc(schema.orders.createdAt));
+  if (!rows.length) return [];
+  const items = await db
+    .select()
+    .from(schema.orderItems)
+    .where(inArray(schema.orderItems.orderId, rows.map((r) => r.id)));
+  return rows.map((o) => ({ ...o, items: items.filter((i) => i.orderId === o.id) }));
+}
+
+export async function getHubSettings() {
+  const db = await getDb();
+  const { getSettings } = await import("./settings");
+  return getSettings(db);
+}

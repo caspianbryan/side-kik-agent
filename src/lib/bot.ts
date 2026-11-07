@@ -2,6 +2,8 @@ import "server-only";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import type { Service } from "@/db/schema";
+import { getSettings } from "./settings";
+import { shopReply } from "./shop-bot";
 import { sendText, type DeliveryStatus } from "./whatsapp";
 
 const HANDOFF_WORDS = ["agent", "help", "human", "msaada", "nisaidie", "saidia"];
@@ -95,45 +97,16 @@ export async function handleIncoming(input: {
     })
     .returning();
 
-  const services = await db
-    .select()
-    .from(schema.services)
-    .where(eq(schema.services.active, true))
-    .orderBy(asc(schema.services.menuKey));
-
-  const intent = detectIntent(input.text, services);
+  const settings = await getSettings(db);
   let reply: string;
   let serviceSlug: string | null = null;
 
-  if (intent.kind === "service") {
-    serviceSlug = intent.service.slug;
-    reply = serviceReply(intent.service);
-    await db
-      .update(schema.contacts)
-      .set({ lastServiceSlug: serviceSlug })
-      .where(eq(schema.contacts.id, contact.id));
-  } else if (intent.kind === "handoff") {
-    const service =
-      intent.service ?? services.find((s) => s.slug === contact.lastServiceSlug);
-    if (!service) {
-      reply = `Sure! Which service do you need help with?\n\n${services
-        .map((s) => `*${s.menuKey}* · ${s.name}`)
-        .join("\n")}\n\nReply with the number, then *AGENT*.`;
-    } else {
-      serviceSlug = service.slug;
-      if (intent.service) {
-        await db
-          .update(schema.contacts)
-          .set({ lastServiceSlug: serviceSlug })
-          .where(eq(schema.contacts.id, contact.id));
-      }
-      await ensureLead(contact.id, contact.name, contact.waId, service, contact.isDemo);
-      reply = `Asante! 🙌 A person will message you here shortly to help with *${service.name}*.
-
-Our fee: *KES ${service.priceKes.toLocaleString("en-KE")}* + any official fee. You pay only after we confirm what's needed.`;
-    }
+  if (settings.mode === "shop") {
+    const result = await shopReply(db, settings, contact, input.text);
+    reply = result.reply;
+    await db.update(schema.contacts).set({ flow: result.flow }).where(eq(schema.contacts.id, contact.id));
   } else {
-    reply = menuText(services, intent.understood);
+    ({ reply, serviceSlug } = await servicesReply(contact, input.text));
   }
 
   await db.insert(schema.messages).values({
@@ -156,6 +129,50 @@ Our fee: *KES ${service.priceKes.toLocaleString("en-KE")}* + any official fee. Y
   });
 
   return { reply, duplicate: false, status };
+}
+
+/** The government-services helper: menu, checklists, AGENT handoff. */
+async function servicesReply(contact: typeof schema.contacts.$inferSelect, text: string) {
+  const db = await getDb();
+  const services = await db
+    .select()
+    .from(schema.services)
+    .where(eq(schema.services.active, true))
+    .orderBy(asc(schema.services.menuKey));
+
+  const intent = detectIntent(text, services);
+  let serviceSlug: string | null = null;
+
+  if (intent.kind === "service") {
+    serviceSlug = intent.service.slug;
+    await db.update(schema.contacts).set({ lastServiceSlug: serviceSlug }).where(eq(schema.contacts.id, contact.id));
+    return { reply: serviceReply(intent.service), serviceSlug };
+  }
+
+  if (intent.kind === "handoff") {
+    const service = intent.service ?? services.find((s) => s.slug === contact.lastServiceSlug);
+    if (!service) {
+      return {
+        reply: `Sure! Which service do you need help with?\n\n${services
+          .map((s) => `*${s.menuKey}* · ${s.name}`)
+          .join("\n")}\n\nReply with the number, then *AGENT*.`,
+        serviceSlug,
+      };
+    }
+    serviceSlug = service.slug;
+    if (intent.service) {
+      await db.update(schema.contacts).set({ lastServiceSlug: serviceSlug }).where(eq(schema.contacts.id, contact.id));
+    }
+    await ensureLead(contact.id, contact.name, contact.waId, service, contact.isDemo);
+    return {
+      reply: `Asante! 🙌 A person will message you here shortly to help with *${service.name}*.
+
+Our fee: *KES ${service.priceKes.toLocaleString("en-KE")}* + any official fee. You pay only after we confirm what's needed.`,
+      serviceSlug,
+    };
+  }
+
+  return { reply: menuText(services, intent.understood), serviceSlug };
 }
 
 /** One open lead per contact + service, so repeated "AGENT" doesn't create duplicates. */
